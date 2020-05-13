@@ -58,22 +58,24 @@ function mergeExternalReferences(options, callback) {
           resolve: {http: {timeout: options.timeout}}
         }).then(
         data => {
-          var i = 0;
-          var mainPath='';
-          var pathToReplace= {};
-          var tmpPath='';
-          for (var jsonpath in data.values()) {
+          let i = 0;
+          let mainPath='';
+          let pathToReplace= {};
+          let tmpPath='';
+          for (let jsonFile in data.values()) {
             //console.log(jsonpath);
             if (i > 0) {
-              swaggerContent.definitions[data.values()[jsonpath]['title']] = data.values()[jsonpath];
-              if (!pathToReplace.hasOwnProperty(path.relative(path.dirname(mainPath),jsonpath))) {
-                pathToReplace[path.relative(path.dirname(mainPath),jsonpath)]="#/definitions/"+data.values()[jsonpath]['title'];
+              swaggerContent.definitions[data.values()[jsonFile]['title']] = data.values()[jsonFile];
+              if (!pathToReplace.hasOwnProperty(path.relative(path.dirname(mainPath),jsonFile))) {
+                pathToReplace[path.relative(path.dirname(mainPath),jsonFile)]="#/definitions/"+data.values()[jsonFile]['title'];
               }
-              fs.copyFileSync(jsonpath,tmpPath+path.sep+path.basename(jsonpath));
+              fs.copyFileSync(jsonFile,tmpPath+path.sep+path.basename(jsonFile));
             }
             else {
-              mainPath=jsonpath;
-              tmpPath=path.dirname(mainPath)+path.sep+'tmp';
+              mainPath=jsonFile;
+              tmpPath=path.dirname(mainPath).split(path.sep);
+              tmpPath.pop();
+              tmpPath=tmpPath.join(path.sep)+path.sep+'tmp';
               if (!fs.existsSync(tmpPath)) {
                 fs.mkdirSync(tmpPath);
               }
@@ -81,11 +83,9 @@ function mergeExternalReferences(options, callback) {
             i++;
           }
 
-          //console.log(swaggerContent.toString());
-          var swaggerContentS=JSON.stringify(swaggerContent);
+          let swaggerContentS=JSON.stringify(swaggerContent);
           console.log(swaggerContentS);
-          for (var path1 in pathToReplace) {
-            // console.log('replacing path '+path1+' to '+pathToReplace[path1]);
+          for (let path1 in pathToReplace) {
             swaggerContentS=swaggerContentS.split(path1).join(pathToReplace[path1]);
           }
           fs.writeFileSync(tmpPath+path.sep+'swagger.json', swaggerContentS);
