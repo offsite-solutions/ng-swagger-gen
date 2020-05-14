@@ -20,10 +20,22 @@ function ngSwaggerGen(options) {
 
   setupProxy();
 
-  var swaggerContent = {};
-  mergeExternalReferences(options, function (swaggerContent) {
+  var referenceStructure = {
+    'definitions': {},
+    'definitionsource': {},
+    'referencedfiles': [],
+    'tmpfiles': []
+  };
 
-    $RefParser.bundle(swaggerContent,
+  mergeExternalReferences(
+    options,
+    options.swagger,
+    referenceStructure,
+    true).then((jsonPath) => {
+
+    console.log('Started parsing ' + jsonPath);
+
+    $RefParser.bundle(jsonPath,
       {
         dereference: {circular: false},
         resolve: {http: {timeout: options.timeout}}
@@ -44,74 +56,75 @@ function ngSwaggerGen(options) {
   });
 }
 
-function mergeExternalReferences(options, callback) {
+async function mergeExternalReferences(options, filename, referenceStructure, doMerge) {
 
-  $RefParser.parse(options.swagger,
+  filename = path.resolve(filename);
+
+  if (referenceStructure['referencedfiles'].includes(filename)) return;
+  console.log('Find external references in ' + path.basename(filename));
+
+  let data = await $RefParser.resolve(filename,
     {
-      dereference: {circular: true},
+      dereference: {circular: false},
       resolve: {http: {timeout: options.timeout}}
-    }).then(
-    swaggerContent => {
-      $RefParser.resolve(options.swagger,
-        {
-          dereference: {circular: true},
-          resolve: {http: {timeout: options.timeout}}
-        }).then(
-        data => {
-          let i = 0;
-          let mainPath='';
-          let pathToReplace= {};
-          let tmpPath='';
-          for (let jsonFile in data.values()) {
-            //console.log(jsonpath);
-            if (i > 0) {
-              swaggerContent.definitions[data.values()[jsonFile]['title']] = data.values()[jsonFile];
-              if (!pathToReplace.hasOwnProperty(path.relative(path.dirname(mainPath),jsonFile))) {
-                pathToReplace[path.relative(path.dirname(mainPath),jsonFile)]="#/definitions/"+data.values()[jsonFile]['title'];
-              }
-              fs.copyFileSync(jsonFile,tmpPath+path.sep+path.basename(jsonFile));
-            }
-            else {
-              mainPath=jsonFile;
-              tmpPath=path.dirname(mainPath).split(path.sep);
-              tmpPath.pop();
-              tmpPath=tmpPath.join(path.sep)+path.sep+'tmp';
-              if (!fs.existsSync(tmpPath)) {
-                fs.mkdirSync(tmpPath);
-              }
-            }
-            i++;
-          }
+    });
 
-          let swaggerContentS=JSON.stringify(swaggerContent);
-          console.log(swaggerContentS);
-          for (let path1 in pathToReplace) {
-            swaggerContentS=swaggerContentS.split(path1).join(pathToReplace[path1]);
-          }
-          fs.writeFileSync(tmpPath+path.sep+'swagger.json', swaggerContentS);
-          callback(tmpPath+path.sep+'swagger.json');
-        },
-        err => {
-          console.error(
-            `Error reading swagger location ${options.swagger}: ${err}`
-          );
-          process.exit(1);
-        }
-      ).catch(function (error) {
-        console.error(`Error: ${error}`);
-        process.exit(1);
-      });
-    },
-    err => {
-      console.error(
-        `Error reading swagger location ${options.swagger}: ${err}`
-      );
-      process.exit(1);
+  for (let jsonFile in data.values()) {
+    if (filename !== jsonFile) {
+      referenceStructure['referencedfiles'].push(jsonFile);
+      referenceStructure['definitions'][data.values()[jsonFile]['title']] = data.values()[jsonFile];
+      referenceStructure['definitionsource'][data.values()[jsonFile]['title']] = jsonFile;
+      await mergeExternalReferences(options, jsonFile, referenceStructure, false);
     }
-  ).catch(function (error) {
-    console.error(`Error: ${error}`);
-    process.exit(1);
-  });
+  }
+
+  if (doMerge) {
+    console.log('Merging started');
+    // creating temporary path
+    let tmpPath = path.dirname(filename).split(path.sep);
+    tmpPath.pop();
+    tmpPath = tmpPath.join(path.sep) + path.sep + 'tmp';
+    if (!fs.existsSync(tmpPath)) {
+      fs.mkdirSync(tmpPath);
+    }
+
+    // reading original file for definition merging
+    let swagger = await $RefParser.parse(filename,
+      {
+        dereference: {circular: false},
+        resolve: {http: {timeout: options.timeout}}
+      });
+
+    // adding definitions
+    for (let definition in referenceStructure['definitions']) {
+      swagger['definitions'][definition] = referenceStructure['definitions'][definition];
+    }
+
+    fs.writeFileSync(tmpPath + path.sep + path.basename(filename), JSON.stringify(swagger));
+    referenceStructure['tmpfiles'].push(tmpPath + path.sep + path.basename(filename));
+
+    // copying referenced files to tmp
+    for (let refFileIndex in referenceStructure['referencedfiles']) {
+      fs.copyFileSync(referenceStructure['referencedfiles'][refFileIndex], tmpPath + path.sep + path.basename(referenceStructure['referencedfiles'][refFileIndex]));
+      referenceStructure['tmpfiles'].push(tmpPath + path.sep + path.basename(referenceStructure['referencedfiles'][refFileIndex]));
+    }
+
+    for (let tmpFile in referenceStructure['tmpfiles']) {
+      let content = await $RefParser.parse(referenceStructure['tmpfiles'][tmpFile],
+        {
+          dereference: {circular: false},
+          resolve: {http: {timeout: options.timeout}}
+        });
+      let contentString = JSON.stringify(content);
+      for (let defSource in referenceStructure['definitionsource']) {
+        contentString=contentString.replace(new RegExp(new RegExp('\"[.]+\/.*'+path.basename(referenceStructure['definitionsource'][defSource]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),'"#/definitions/'+defSource);
+      }
+      fs.writeFileSync(referenceStructure['tmpfiles'][tmpFile], contentString);
+    }
+
+    console.log('Merging finished');
+    return tmpPath + path.sep + path.basename(filename);
+  }
 }
 
 /**
