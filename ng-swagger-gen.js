@@ -100,32 +100,13 @@ async function mergeExternalReferences(options, filename, referenceStructure, do
       swagger['definitions'][definition] = referenceStructure['definitions'][definition];
     }
 
-    let swaggerString = JSON.stringify(swagger);
+    let swaggerString = JSON.stringify(swagger, null, 4);
     for (let defSource in referenceStructure['definitionsource']) {
-      swaggerString = swaggerString.replace(new RegExp('\"[.]+\/[.]*' + path.basename(referenceStructure['definitionsource'][defSource]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\"'), '"#/definitions/' + defSource + '"');
+      swaggerString = swaggerString.replace(new RegExp('\:\ \"(.*)\/' + path.basename(referenceStructure['definitionsource'][defSource]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\"','g'), ': "#/definitions/' + defSource + '"');
     }
 
     fs.writeFileSync(tmpPath + path.sep + 'merged_' + path.basename(filename), swaggerString);
     referenceStructure['tmpfiles'].push(tmpPath + path.sep + 'merged_' + path.basename(filename));
-
-    // copying referenced files to tmp
-    /* for (let refFileIndex in referenceStructure['referencedfiles']) {
-      fs.copyFileSync(referenceStructure['referencedfiles'][refFileIndex], tmpPath + path.sep + path.basename(referenceStructure['referencedfiles'][refFileIndex]));
-      referenceStructure['tmpfiles'].push(tmpPath + path.sep + path.basename(referenceStructure['referencedfiles'][refFileIndex]));
-    }
-
-    for (let tmpFile in referenceStructure['tmpfiles']) {
-      let content = await $RefParser.parse(referenceStructure['tmpfiles'][tmpFile],
-        {
-          dereference: {circular: false},
-          resolve: {http: {timeout: options.timeout}}
-        });
-      let contentString = JSON.stringify(content);
-      for (let defSource in referenceStructure['definitionsource']) {
-        contentString = contentString.replace(new RegExp('\"[.]+\/[.]*' + path.basename(referenceStructure['definitionsource'][defSource]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\"'), '"#/definitions/' + defSource + '"');
-      }
-      fs.writeFileSync(referenceStructure['tmpfiles'][tmpFile], contentString);
-    } */
 
     console.log('Merging finished');
     return tmpPath + path.sep + 'merged_' + path.basename(filename);
