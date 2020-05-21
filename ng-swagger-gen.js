@@ -31,11 +31,11 @@ function ngSwaggerGen(options) {
     options,
     options.swagger,
     referenceStructure,
-    true).then((jsonPath) => {
+    true).then((data) => {
 
-    console.log('Started parsing ' + jsonPath);
+    console.log('Started parsing merged API');
 
-    $RefParser.bundle(jsonPath,
+    $RefParser.bundle(data,
       {
         dereference: {circular: false},
         resolve: {http: {timeout: options.timeout}}
@@ -81,12 +81,12 @@ async function mergeExternalReferences(options, filename, referenceStructure, do
   if (doMerge) {
     console.log('Merging started');
     // creating temporary path
-    let tmpPath = path.dirname(filename).split(path.sep);
+    /* let tmpPath = path.dirname(filename).split(path.sep);
     tmpPath.pop();
     tmpPath = tmpPath.join(path.sep) + path.sep + 'tmp';
     if (!fs.existsSync(tmpPath)) {
       fs.mkdirSync(tmpPath);
-    }
+    } */
 
     // reading original file for definition merging
     let swagger = await $RefParser.parse(filename,
@@ -105,11 +105,12 @@ async function mergeExternalReferences(options, filename, referenceStructure, do
       swaggerString = swaggerString.replace(new RegExp('\:\ \"(.*)\/' + path.basename(referenceStructure['definitionsource'][defSource]).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\"','g'), ': "#/definitions/' + defSource + '"');
     }
 
-    fs.writeFileSync(tmpPath + path.sep + 'merged_' + path.basename(filename), swaggerString);
-    referenceStructure['tmpfiles'].push(tmpPath + path.sep + 'merged_' + path.basename(filename));
+    // fs.writeFileSync(tmpPath + path.sep + 'merged_' + path.basename(filename), swaggerString);
+    // referenceStructure['tmpfiles'].push(tmpPath + path.sep + 'merged_' + path.basename(filename));
 
     console.log('Merging finished');
-    return tmpPath + path.sep + 'merged_' + path.basename(filename);
+    //return tmpPath + path.sep + 'merged_' + path.basename(filename);
+    return JSON.parse(swaggerString);
   }
 }
 
@@ -333,7 +334,7 @@ function doGenerate(swagger, options) {
   }
 
   // Write the model index
-  var modelIndexFile = path.join(output, 'models.ts');
+  var modelIndexFile = path.join(output, (options.prefix?(options.prefix.toLowerCase()+'-'):'')+'models.ts');
   if (options.modelIndex !== false) {
     generate(templates.models, {models: modelsArray}, modelIndexFile);
   } else if (removeStaleFiles) {
@@ -380,7 +381,7 @@ function doGenerate(swagger, options) {
   }
 
   // Write the service index
-  var serviceIndexFile = path.join(output, 'services.ts');
+  var serviceIndexFile = path.join(output, (options.prefix?(options.prefix.toLowerCase()+'-'):'')+'services.ts');
   if (options.serviceIndex !== false) {
     generate(templates.services, {services: servicesArray}, serviceIndexFile);
   } else if (removeStaleFiles) {
