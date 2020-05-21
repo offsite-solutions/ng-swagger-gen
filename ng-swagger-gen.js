@@ -334,7 +334,7 @@ function doGenerate(swagger, options) {
   }
 
   // Write the model index
-  var modelIndexFile = path.join(output, (options.prefix?(options.prefix.toLowerCase()+'.'):'')+'models.ts');
+  var modelIndexFile = path.join(output, 'models.ts');
   if (options.modelIndex !== false) {
     generate(templates.models, {models: modelsArray}, modelIndexFile);
   } else if (removeStaleFiles) {
@@ -381,7 +381,7 @@ function doGenerate(swagger, options) {
   }
 
   // Write the service index
-  var serviceIndexFile = path.join(output, (options.prefix?(options.prefix.toLowerCase()+'.'):'')+'services.ts');
+  var serviceIndexFile = path.join(output, 'services.ts');
   if (options.serviceIndex !== false) {
     generate(templates.services, {services: servicesArray}, serviceIndexFile);
   } else if (removeStaleFiles) {
