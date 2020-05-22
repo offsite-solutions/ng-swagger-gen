@@ -250,11 +250,18 @@ function doGenerate(swagger, options) {
   var generateEnumModule = options.enumModule !== false;
 
   // Utility function to render a template and write it to a file
-  var generate = function (template, model, file) {
+  var generate = function (template, model, file, merge=false) {
     var code = Mustache.render(template, model, templates)
       .replace(/[^\S\r\n]+$/gm, '');
-    fs.writeFileSync(file, code, 'UTF-8');
-    console.info('Wrote ' + file);
+    if (merge && fs.existsSync(file)) {
+      let data = fs.readFileSync(file, 'UTF-8');
+      let newLines=[...new Set(data.split(/[\n]/).concat(code.split(/[\n]/)))];
+      fs.writeFileSync(file, newLines.join("\n"), 'UTF-8');
+      console.info('Merged ' + file);
+    } else {
+      fs.writeFileSync(file, code, 'UTF-8');
+      console.info('Wrote ' + file);
+    }
   };
 
   // Calculate the globally used names
@@ -336,7 +343,7 @@ function doGenerate(swagger, options) {
   // Write the model index
   var modelIndexFile = path.join(output, 'models.ts');
   if (options.modelIndex !== false) {
-    generate(templates.models, {models: modelsArray}, modelIndexFile);
+    generate(templates.models, {models: modelsArray}, modelIndexFile, options.mergeModels);
   } else if (removeStaleFiles) {
     rmIfExists(modelIndexFile);
   }
@@ -383,7 +390,7 @@ function doGenerate(swagger, options) {
   // Write the service index
   var serviceIndexFile = path.join(output, 'services.ts');
   if (options.serviceIndex !== false) {
-    generate(templates.services, {services: servicesArray}, serviceIndexFile);
+    generate(templates.services, {services: servicesArray}, serviceIndexFile, options.mergeServices);
   } else if (removeStaleFiles) {
     rmIfExists(serviceIndexFile);
   }
