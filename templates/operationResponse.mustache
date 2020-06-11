@@ -1,5 +1,5 @@
 {{{operationComments}}}{{operationName}}Response({{#operationParamsClass
-  }}params: {{serviceClass}}.{{operationParamsClass}}{{/operationParamsClass}}{{^operationParamsClass
+  }}params: {{serviceClass}}.{{operationParamsClass}},{{/operationParamsClass}}{{^operationParamsClass
   }}{{#operationParameters}}{{paramVar}}{{^paramRequired}}?{{/paramRequired}}: {{{paramType
   }}},{{/operationParameters}}{{/operationParamsClass
     }} headers?: string | { [name: string]: string | string[] }): __Observable<{{{operationHttpResponseType}}}> {
