@@ -3,9 +3,9 @@
   }}{{#operationParameters}}{{paramVar}}{{^paramRequired}}?{{/paramRequired}}: {{{paramType
   }}}{{^paramIsLast}},
     {{/paramIsLast}}{{/operationParameters}}{{/operationParamsClass
-    }}): __Observable<{{{operationHttpResponseType}}}> {
+    }}, headers?: string | { [name: string]: string | string[] }): __Observable<{{{operationHttpResponseType}}}> {
     let __params = this.newParams();
-    let __headers = new HttpHeaders();
+    let __headers = new HttpHeaders(headers);
     let __body: any = null;{{#operationIsMultipart}}
     let __formData = new FormData();
     __body = __formData;{{/operationIsMultipart}}

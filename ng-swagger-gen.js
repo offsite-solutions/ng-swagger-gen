@@ -1348,6 +1348,7 @@ function processServices(swagger, models, options) {
           }
         }
       }
+      docString += '\n@param headers Extra http headers sent in request'
       if (operationResponses.resultDescription) {
         docString += '\n@return ' + operationResponses.resultDescription;
       }
