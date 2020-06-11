@@ -1,9 +1,8 @@
 {{{operationComments}}}{{operationName}}Response({{#operationParamsClass
   }}params: {{serviceClass}}.{{operationParamsClass}}{{/operationParamsClass}}{{^operationParamsClass
   }}{{#operationParameters}}{{paramVar}}{{^paramRequired}}?{{/paramRequired}}: {{{paramType
-  }}}{{^paramIsLast}},
-    {{/paramIsLast}}{{/operationParameters}}{{/operationParamsClass
-    }}, headers?: string | { [name: string]: string | string[] }): __Observable<{{{operationHttpResponseType}}}> {
+  }}},{{/operationParameters}}{{/operationParamsClass
+    }} headers?: string | { [name: string]: string | string[] }): __Observable<{{{operationHttpResponseType}}}> {
     let __params = this.newParams();
     let __headers = new HttpHeaders(headers);
     let __body: any = null;{{#operationIsMultipart}}
