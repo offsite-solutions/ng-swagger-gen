@@ -4,10 +4,9 @@
   }}},{{/operationParameters}}{{/operationParamsClass
     }} headers?: string | { [name: string]: string | string[] }): __Observable<{{{operationResultType}}}> {
     return this.{{operationName}}Response({{#operationParamsClass
-    }}params{{/operationParamsClass}}{{^operationParamsClass
-    }}{{#operationParameters}}{{paramVar}}{{^paramIsLast}}, {{/paramIsLast
-    }}{{/operationParameters}}{{/operationParamsClass
-    }}).pipe(
+    }}params,{{/operationParamsClass}}{{^operationParamsClass
+    }}{{#operationParameters}}{{paramVar}},{{/operationParameters}}{{/operationParamsClass
+    }} headers).pipe(
       __map(_r => _r.body as {{{operationResultType}}})
     );
   }
