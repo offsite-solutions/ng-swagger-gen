@@ -1,9 +1,8 @@
 {{{operationComments}}}{{operationName}}({{#operationParamsClass
-  }}params: {{serviceClass}}.{{operationParamsClass}}{{/operationParamsClass}}{{^operationParamsClass
+  }}params: {{serviceClass}}.{{operationParamsClass}},{{/operationParamsClass}}{{^operationParamsClass
   }}{{#operationParameters}}{{paramVar}}{{^paramRequired}}?{{/paramRequired}}: {{{paramType
-  }}}{{^paramIsLast}},
-    {{/paramIsLast}}{{/operationParameters}}{{/operationParamsClass
-    }}): __Observable<{{{operationResultType}}}> {
+  }}},{{/operationParameters}}{{/operationParamsClass
+    }} headers?: string | { [name: string]: string | string[] }): __Observable<{{{operationResultType}}}> {
     return this.{{operationName}}Response({{#operationParamsClass
     }}params{{/operationParamsClass}}{{^operationParamsClass
     }}{{#operationParameters}}{{paramVar}}{{^paramIsLast}}, {{/paramIsLast
