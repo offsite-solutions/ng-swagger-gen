@@ -1,3 +1,9 @@
+ng-swagger-gen-eps: ng-swagger-ge package fork, modified for internal use
+---
+
+- handles external references to models
+- ability to generate multiple swagger files without overwriting base models
+
 ng-swagger-gen: A Swagger 2.0 code generator for Angular
 ---
 
