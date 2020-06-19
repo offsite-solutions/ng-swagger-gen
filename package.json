@@ -1,6 +1,6 @@
 {
   "name": "ng-swagger-gen-eps",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "license": "MIT",
   "author": "Offsite Solutions Kft.",
   "description": "A Swagger 2.0 codegen for Angular",
